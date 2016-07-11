@@ -1,0 +1,13 @@
+README
+
+run_dev.sh takes one argument specifing which task you want to run with.
+For example, if you want to test your task 2 program with dev set, you should invoke
+
+sh run_dev.sh task2/
+
+The script will output the number of different lines with respect to the correct
+solution. A correct implementation should output several lines of 0's.
+
+formatVerification.py takes no arguments. This script verifies that you are printing output
+correctly to stdout based off of the toy_example. It does NOT verify that you are printing
+the correct output, only the correct output format.
