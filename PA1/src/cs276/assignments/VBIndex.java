@@ -24,9 +24,9 @@ public class VBIndex implements BaseIndex {
     int termId = buffer.getInt();
     int length = buffer.getInt();
 
-    byte[] vbCode = new byte[length];
-    buffer = ByteBuffer.wrap(vbCode);
+    buffer = ByteBuffer.allocate(length);
     fc.read(buffer);
+    byte[] vbCode = buffer.array();
 
     List<Integer> gaps = new ArrayList<>();
     int[] numberEndIndex = new int[2];
