@@ -53,12 +53,14 @@ public class Rank {
 			Collections.sort(urlAndScores, new Comparator<Pair<String,Double>>() {
 				@Override
 				public int compare(Pair<String, Double> o1, Pair<String, Double> o2) {
-					/*
-					 * TODO : Your code here
-           *        Define a custom compare function to help sort urls
-           *        urls for a query based on scores.
-					 */
-					return -1;
+					double diff = o1.getSecond() - o2.getSecond();
+					if (diff == 0) {
+					  return 0;
+					} else if (diff > 0) {
+					  return -1;
+					} else {
+					  return 1;
+					}
 				}	
 			});
 			
