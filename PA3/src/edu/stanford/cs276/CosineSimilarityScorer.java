@@ -25,12 +25,12 @@ public class CosineSimilarityScorer extends AScorer {
   /*
    * TODO: You will want to tune the values for the weights for each field.
    */
-  double urlweight = 0.1;
-  double titleweight = 0.1;
-  double bodyweight = 0.1;
-  double headerweight = 0.1;
-  double anchorweight = 0.1;
-  double smoothingBodyLength = 1.0;
+  double urlweight = 0.3;
+  double titleweight = 1.0;
+  double bodyweight = 0.2;
+  double headerweight = 0.5;
+  double anchorweight = 0.5;
+  double smoothingBodyLength = 2000.0;
 
   /**
    * Construct a Cosine Similarity Scorer.

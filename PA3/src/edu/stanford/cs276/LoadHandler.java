@@ -191,11 +191,11 @@ public class LoadHandler {
     // Laplace add-one smoothing
     totalDocCount += 1;
     for (String term : termDocCount.keySet()) {
-      double idf = totalDocCount / (termDocCount.get(term) + 1);
+      double idf = Math.log10(totalDocCount / (termDocCount.get(term) + 1));
       termDocCount.put(term, idf);
     }
     // Special symbol representing terms not in training data
-    termDocCount.put("__UNKNOWN__", (double) totalDocCount);
+    termDocCount.put("__UNKNOWN__", Math.log10(totalDocCount));
 
     // Save to file
     try {

@@ -11,6 +11,7 @@ import java.util.Set;
  * implementation of scorers.
  */
 public abstract class AScorer {
+  protected boolean sublinearTF = true;
 
   // Map: term -> idf
   Map<String, Double> idfs;
@@ -46,6 +47,14 @@ public abstract class AScorer {
     return score;
   }
 
+  public double getIdf(String term) {
+    Double idf = idfs.get(term);
+    if (idf == null) {
+      idf = idfs.get("__UNKNOWN__");
+    }
+    return idf;
+  }
+
   /**
    * Score each document for each query.
    * 
@@ -78,16 +87,15 @@ public abstract class AScorer {
     }
 
     // sublinear scaling
-    sublinearScaleFreqs(tfQuery);
+    if (sublinearTF) {
+      sublinearScaleFreqs(tfQuery);
+    }
 
     // idf weighting
     for (Map.Entry<String, Double> e : tfQuery.entrySet()) {
-      double sublinearScaledCount = e.getValue();
-      Double idf = idfs.get(e.getKey());
-      if (idf == null) {
-        idf = idfs.get("__UNKNOWN__");
-      }
-      double score = idf * sublinearScaledCount;
+      double tf = e.getValue();
+      Double idf = getIdf(e.getKey());
+      double score = tf * idf;
       e.setValue(score);
     }
 
@@ -132,7 +140,6 @@ public abstract class AScorer {
     if (d.url != null) {
       String[] tokens = d.url.toLowerCase().split("[^0-9a-zA-Z]+");
       updateFreqs(tfUrl, tokens);
-      sublinearScaleFreqs(tfUrl);
     }
     return tfUrl;
   }
@@ -143,7 +150,6 @@ public abstract class AScorer {
     if (d.title != null) {
       String[] tokens = d.title.toLowerCase().split("\\s");
       updateFreqs(tfTitle, tokens);
-      sublinearScaleFreqs(tfTitle);
     }
     return tfTitle;
   }
@@ -155,8 +161,6 @@ public abstract class AScorer {
       for (Map.Entry<String, List<Integer>> e : d.body_hits.entrySet()) {
         tfBody.put(e.getKey().toLowerCase(), (double) e.getValue().size());
       }
-
-      sublinearScaleFreqs(tfBody);
     }
     return tfBody;
   }
@@ -169,8 +173,6 @@ public abstract class AScorer {
         String[] tokens = header.toLowerCase().split("\\s");
         updateFreqs(tfHeader, tokens);
       }
-
-      sublinearScaleFreqs(tfHeader);
     }
     return tfHeader;
   }
@@ -189,8 +191,6 @@ public abstract class AScorer {
           }
         }
       }
-
-      sublinearScaleFreqs(tfAnchor);
     }
     return tfAnchor;
   }
@@ -225,6 +225,12 @@ public abstract class AScorer {
     tfs.put("body", tfBody);
     tfs.put("header", tfHeader);
     tfs.put("anchor", tfAnchor);
+    
+    if (sublinearTF) {
+      for (String tftype : TFTYPES) {
+        sublinearScaleFreqs(tfs.get(tftype));
+      }
+    }
 
     return tfs;
   }
