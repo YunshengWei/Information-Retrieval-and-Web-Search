@@ -17,7 +17,7 @@ public class BM25Scorer extends AScorer {
   /*
    * TODO: You will want to tune these values
    */
-  double urlweight = 0.3;
+  double urlweight = 0.2;
   double titleweight = 1.0;
   double bodyweight = 0.2;
   double headerweight = 0.5;
