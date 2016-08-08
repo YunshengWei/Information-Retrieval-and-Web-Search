@@ -173,7 +173,7 @@ public class SmallestWindowScorer extends BM25Scorer {
     }
 
     if (d.body_hits != null) {
-      // Use smallest window in body seems to destory performance
+      // Use smallest window in body seems to hurt performance
       //window = Math.min(window, getWindow(queryWords, d.body_hits));
     }
 
