@@ -1,10 +1,15 @@
 package edu.stanford.cs276;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
+
+import edu.stanford.cs276.util.Pair;
 
 /**
  * A skeleton for implementing the Smallest Window scorer in Task 3. Note: The
@@ -21,12 +26,70 @@ public class SmallestWindowScorer extends BM25Scorer {
     super(idfs, queryDict);
   }
 
+  // a variant of minimum window substring problem
   private double getWindow(Set<String> queryWords,
       Map<String, List<Integer>> postingDict) {
-    if (!postingDict.keySet().equals(queryWords)) {
-      return Double.POSITIVE_INFINITY;
+    double window = Double.POSITIVE_INFINITY;
+
+    if (postingDict.keySet().containsAll(queryWords)) {
+      // int, String, int, List
+      PriorityQueue<Object[]> pq =
+          new PriorityQueue<>(queryWords.size(), new Comparator<Object[]>() {
+            @Override
+            public int compare(Object[] o1, Object[] o2) {
+              return (int) o1[0] - (int) o2[0];
+            }
+          });
+
+      // initialize priority queue
+      for (Map.Entry<String, List<Integer>> postings : postingDict.entrySet()) {
+        String term = postings.getKey();
+        List<Integer> postingList = postings.getValue();
+        pq.add(new Object[] { postingList.get(0), term, 0, postingList });
+      }
+
+      int count = 0;
+      int left = 0;
+      Map<String, Integer> counter = new HashMap<>();
+      for (String term : queryWords) {
+        counter.put(term, 0);
+      }
+      LinkedList<Pair<Integer, String>> poss = new LinkedList<>();
+
+      while (!pq.isEmpty()) {
+        Object[] o = pq.poll();
+        int pos = (int) o[0];
+        String term = (String) o[1];
+        int index = (int) o[2];
+        @SuppressWarnings("unchecked")
+        List<Integer> postings = (List<Integer>) o[3];
+        if (index < postings.size() - 1) {
+          pq.add(new Object[] { postings.get(index + 1), term, index + 1,
+              postings });
+        }
+
+        counter.put(term, counter.get(term) + 1);
+        poss.add(new Pair<>(pos, term));
+        if (counter.get(term) == 1) {
+          count++;
+          if (count == queryWords.size()) {
+            String t;
+            do {
+              Pair<Integer, String> pair = poss.pollFirst();
+              left = pair.getFirst();
+              t = pair.getSecond();
+              
+              counter.put(t, counter.get(t) - 1);
+            } while (counter.get(t) >= 1);
+
+            window = Math.min(window, pos + 1 - left);
+            count--;
+          }
+        }
+      }
     }
-    return Double.POSITIVE_INFINITY;
+    
+    return window;
   }
 
   // This is essentially minimum window substring problem
@@ -57,7 +120,7 @@ public class SmallestWindowScorer extends BM25Scorer {
             left++;
             t = text[left];
           }
-          
+
           window = Math.min(window, i - left + 1);
           map.remove(t);
           count--;
@@ -110,7 +173,8 @@ public class SmallestWindowScorer extends BM25Scorer {
     }
 
     if (d.body_hits != null) {
-      window = Math.min(window, getWindow(queryWords, d.body_hits));
+      // Use smallest window in body seems to destory performance
+      //window = Math.min(window, getWindow(queryWords, d.body_hits));
     }
 
     return window;
@@ -129,10 +193,15 @@ public class SmallestWindowScorer extends BM25Scorer {
     for (String queryWord : q.queryWords) {
       queryWords.add(queryWord.toLowerCase());
     }
-
-    double smallestWindow = getWindow(d, q);
-    double a = 1.0 / (boostingFactor - 1) - queryWords.size();
-    double boostScore = 1.0 / (smallestWindow + a) + 1;
+    
+    double boostScore;
+    if (boostingFactor > 1) {
+      double smallestWindow = getWindow(d, q);
+      double a = 1.0 / (boostingFactor - 1) - queryWords.size();
+      boostScore = 1.0 / (smallestWindow + a) + 1;
+    } else {
+      boostScore = 1.0;
+    }
 
     return boostScore;
   }

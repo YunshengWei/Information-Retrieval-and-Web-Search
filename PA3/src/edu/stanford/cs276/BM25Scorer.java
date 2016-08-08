@@ -4,9 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,9 +12,6 @@ import java.util.Map;
  */
 public class BM25Scorer extends AScorer {
 
-  /*
-   * TODO: You will want to tune these values
-   */
   double urlweight = 0.2;
   double titleweight = 1.0;
   double bodyweight = 0.2;
@@ -24,7 +19,7 @@ public class BM25Scorer extends AScorer {
   double anchorweight = 0.5;
 
   // BM25-specific weights
-  double burl = 0.8;
+  double burl = 0.5;
   double btitle = 0.7;
   double bheader = 0.8;
   double bbody = 0.8;
@@ -177,7 +172,7 @@ public class BM25Scorer extends AScorer {
           + bodyweight * tfs.get("body").get(term)
           + headerweight * tfs.get("header").get(term)
           + anchorweight * tfs.get("anchor").get(term);
-      
+
       score += wdt / (wdt + k1) * getIdf(term);
     }
 
