@@ -1,12 +1,15 @@
 package cs276.pa4;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import weka.classifiers.Classifier;
+import weka.classifiers.functions.LinearRegression;
 import weka.core.Attribute;
-import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -19,29 +22,26 @@ public class PointwiseLearner extends Learner {
 
   @Override
   public Instances extractTrainFeatures(String train_data_file,
-      String train_rel_file, Map<String, Double> idfs) {
-
-    /*
-     * @TODO: Below is a piece of sample code to show you the basic approach to
-     * construct a Instances object, replace with your implementation.
-     */
-
-    Instances dataset = null;
-
-    /* Build attributes list */
-    ArrayList<Attribute> attributes = new ArrayList<Attribute>();
-    attributes.add(new Attribute("url_w"));
-    attributes.add(new Attribute("title_w"));
-    attributes.add(new Attribute("body_w"));
-    attributes.add(new Attribute("header_w"));
-    attributes.add(new Attribute("anchor_w"));
-    attributes.add(new Attribute("relevance_score"));
-    dataset = new Instances("train_dataset", attributes, 0);
+      String train_rel_file, Map<String, Double> idfs) throws IOException {
 
     /* Add data */
-    double[] instance = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
-    Instance inst = new DenseInstance(1.0, instance);
-    dataset.add(inst);
+    Quad<Instances, List<Pair<Query, Document>>, ArrayList<Attribute>, Map<Integer, List<Integer>>> quad =
+        Util.loadSignalFile(train_data_file, idfs);
+    Map<String, Map<String, Double>> rels = Util.loadRelData(train_rel_file);
+
+    Instances dataset = quad.getFirst();
+    dataset.insertAttributeAt(new Attribute("relevance_score"),
+        dataset.numAttributes());
+
+    List<Pair<Query, Document>> queryDocList = quad.getSecond();
+    for (int i = 0; i < dataset.size(); i++) {
+      Instance instance = dataset.get(i);
+      Pair<Query, Document> pair = queryDocList.get(i);
+      String query = pair.getFirst().query;
+      String url = pair.getSecond().url;
+      double relScore = rels.get(query).get(url);
+      instance.setValue(dataset.numAttributes() - 1, relScore);
+    }
 
     /* Set last attribute as target */
     dataset.setClassIndex(dataset.numAttributes() - 1);
@@ -50,28 +50,69 @@ public class PointwiseLearner extends Learner {
   }
 
   @Override
-  public Classifier training(Instances dataset) {
-    /*
-     * @TODO: Your code here
-     */
-    return null;
+  public Classifier training(Instances dataset) throws Exception {
+    LinearRegression model = new LinearRegression();
+    model.buildClassifier(dataset);
+
+    return model;
   }
 
   @Override
   public TestFeatures extractTestFeatures(String test_data_file,
       Map<String, Double> idfs) {
-    /*
-     * @TODO: Your code here
-     */
-    return null;
+    Quad<Instances, List<Pair<Query, Document>>, ArrayList<Attribute>, Map<Integer, List<Integer>>> quad =
+        Util.loadSignalFile(test_data_file, idfs);
+    Instances instances = quad.getFirst();
+    instances.setRelationName("test_dataset");
+    instances.insertAttributeAt(new Attribute("relevance_score"),
+        instances.numAttributes());
+    List<Pair<Query, Document>> queryDocList = quad.getSecond();
+
+    Map<String, Map<String, Integer>> indexMap = new HashMap<>();
+    for (int i = 0; i < queryDocList.size(); ++i) {
+      Pair<Query, Document> pair = queryDocList.get(i);
+      String query = pair.getFirst().query;
+      String url = pair.getSecond().url;
+      if (!indexMap.containsKey(query)) {
+        Map<String, Integer> map = new HashMap<>();
+        map.put(url, i);
+        indexMap.put(query, map);
+      } else {
+        indexMap.get(query).put(url, i);
+      }
+    }
+
+    return new TestFeatures(instances, indexMap);
   }
 
   @Override
-  public Map<String, List<String>> testing(TestFeatures tf, Classifier model) {
-    /*
-     * @TODO: Your code here
-     */
-    return null;
-  }
+  public Map<String, List<String>> testing(TestFeatures tf, Classifier model)
+      throws Exception {
+    Map<String, List<String>> ranked = new HashMap<>();
+    for (Map.Entry<String, Map<String, Integer>> e : tf.index_map.entrySet()) {
+      String query = e.getKey();
+      List<String> rankedUrls = new ArrayList<>();
+      // url -> relevance_score
+      Map<String, Double> relScores = new HashMap<>();
 
+      for (Map.Entry<String, Integer> urlEntry : e.getValue().entrySet()) {
+        String url = urlEntry.getKey();
+        Instance feature = tf.features.get(urlEntry.getValue());
+        rankedUrls.add(url);
+        relScores.put(url, model.classifyInstance(feature));
+      }
+
+      rankedUrls.sort(new Comparator<String>() {
+        @Override
+        public int compare(String url1, String url2) {
+          double score1 = relScores.get(url1);
+          double score2 = relScores.get(url2);
+          return score1 > score2 ? -1 : (score1 == score2 ? 0 : 1);
+        }
+      });
+      ranked.put(query, rankedUrls);
+    }
+
+    return ranked;
+  }
 }

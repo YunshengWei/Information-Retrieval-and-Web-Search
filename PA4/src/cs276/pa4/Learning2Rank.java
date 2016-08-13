@@ -3,7 +3,6 @@ package cs276.pa4;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,9 +27,11 @@ public class Learning2Rank {
    *          1: Linear Regression 2: SVM 3: More features 4: Extra credit
    * @param idfs
    * @return
+   * @throws Exception
    */
   public static Classifier train(String train_signal_file,
-      String train_rel_file, int task, Map<String, Double> idfs) {
+      String train_rel_file, int task, Map<String, Double> idfs)
+      throws Exception {
     System.err.println("## Training with feature_file =" + train_signal_file
         + ", rel_file = " + train_rel_file + " ... \n");
     Classifier model = null;
@@ -77,7 +78,7 @@ public class Learning2Rank {
    * @return
    */
   public static Map<String, List<String>> test(String test_signal_file,
-      Classifier model, int task, Map<String, Double> idfs) {
+      Classifier model, int task, Map<String, Double> idfs) throws Exception {
     System.err.println(
         "## Testing with feature_file=" + test_signal_file + " ... \n");
     Map<String, List<String>> ranked_queries =
@@ -130,7 +131,7 @@ public class Learning2Rank {
     }
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
     if (args.length != 5 && args.length != 6) {
       System.err.println("Input arguments: " + Arrays.toString(args));
       System.err.println(
@@ -174,7 +175,8 @@ public class Learning2Rank {
     if (ranked_out_file == null
         || ranked_out_file.isEmpty()) { /* output to stdout */
       writeRankedResultsToFile(ranked_queries, System.out);
-    } else { /* output to file */
+    } else {
+      /* output to file */
       try {
         writeRankedResultsToFile(ranked_queries,
             new PrintStream(new FileOutputStream(ranked_out_file)));

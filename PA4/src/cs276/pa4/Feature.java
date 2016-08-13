@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.apple.eawt.AppEvent.SystemSleepEvent;
+
 public class Feature {
 	
 	public static boolean isSublinearScaling = true;
@@ -100,12 +102,14 @@ public class Feature {
 	public double[] extractMoreFeatures(Document d, Query q, Map<Query,Map<String, Document>> dataMap) {
 		
 		double[] basic = extractFeatureVector(d, q);
-		double[] more = null;
-
-		/*
-		 * @TODO: Your code here
-		 */
-		return null;
+		// BM25F, PageRank, Smallest Window features
+		double[] more = new double[1];
+		// PageRank
+		
+		double[] concat = new double[basic.length + more.length];
+		System.arraycopy(basic, 0, concat, 0, basic.length);
+		System.arraycopy(more, 0, concat, basic.length, more.length);
+		return concat;
 	}
 	
 }
