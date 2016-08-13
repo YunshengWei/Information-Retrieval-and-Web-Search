@@ -1,0 +1,48 @@
+<project name="cs276-pa4" default="compile" basedir=".">
+    <description>
+        simple example bin file
+    </description>
+  <!-- set global properties for this bin -->
+  <property name="src" location="src"/>
+  <property name="bin" location="classes"/>
+  <property name="program" location="cs276-pa4"/>
+  <property environment="env"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the bin directory structure used by compile -->
+    <mkdir dir="${bin}"/>
+  </target>
+
+  <!-- classpaths -->
+  <path id="compile.classpath">
+    <pathelement location="classes"/>
+    <fileset dir=".">
+      <include name="lib/weka.jar"/>
+      <include name="lib/ejml-0.23.jar"/>
+    </fileset>
+  </path>
+
+  <target name="compile" depends="init"
+        description="compile the source " >
+    <!-- Compile the java code from ${src} into ${bin} -->
+    <javac srcdir="${src}" destdir="${bin}" debug="true" includeantruntime="false">
+      <classpath refid="compile.classpath"/>
+    </javac>
+  </target>
+
+  <target name="dist" depends="compile"
+        description="generate the distribution" >
+    <jar jarfile="${program}.jar">
+      <fileset dir="${bin}"/>
+    </jar>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${bin} directory and the jar file -->
+    <delete dir="${bin}"/>
+    <delete file="${program}.jar"/>
+  </target>
+</project>
