@@ -40,8 +40,8 @@ public class Learning2Rank {
     if (task == 1) {
       learner = new PointwiseLearner();
     } else if (task == 2) {
-      boolean isLinearKernel = true;
-      learner = new PairwiseLearner(isLinearKernel);
+      boolean isLinearKernel = false;
+      learner = new PairwiseLearner(1, 1.0/32, isLinearKernel);
     } else if (task == 3) {
 
       /*

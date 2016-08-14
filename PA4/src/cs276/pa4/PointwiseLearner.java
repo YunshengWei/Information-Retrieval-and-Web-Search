@@ -60,27 +60,13 @@ public class PointwiseLearner extends Learner {
   @Override
   public TestFeatures extractTestFeatures(String test_data_file,
       Map<String, Double> idfs) {
-    Quad<Instances, List<Pair<Query, Document>>, ArrayList<Attribute>, Map<Integer, List<Integer>>> quad =
-        Util.loadSignalFile(test_data_file, idfs);
-    Instances instances = quad.getFirst();
-    instances.setRelationName("test_dataset");
-    instances.insertAttributeAt(new Attribute("relevance_score"),
-        instances.numAttributes());
-    List<Pair<Query, Document>> queryDocList = quad.getSecond();
+    Triple<Instances, Map<String, Map<String, Integer>>, ArrayList<Attribute>> triple =
+        Learner.extractFeatures(test_data_file, idfs,
+            new Attribute("relevance_score"));
+    Instances instances = triple.getFirst();
+    Map<String, Map<String, Integer>> indexMap = triple.getSecond();
 
-    Map<String, Map<String, Integer>> indexMap = new HashMap<>();
-    for (int i = 0; i < queryDocList.size(); ++i) {
-      Pair<Query, Document> pair = queryDocList.get(i);
-      String query = pair.getFirst().query;
-      String url = pair.getSecond().url;
-      if (!indexMap.containsKey(query)) {
-        Map<String, Integer> map = new HashMap<>();
-        map.put(url, i);
-        indexMap.put(query, map);
-      } else {
-        indexMap.get(query).put(url, i);
-      }
-    }
+    instances.setRelationName("test_dataset");
 
     return new TestFeatures(instances, indexMap);
   }

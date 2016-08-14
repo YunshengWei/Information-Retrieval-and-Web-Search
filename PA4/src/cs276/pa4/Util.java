@@ -228,6 +228,7 @@ public class Util {
    * @param idfFile
    * @return
    */
+  @SuppressWarnings("unchecked")
   public static Map<String, Double> loadDFs(String idfFile) {
     Map<String, Double> termDocCount = null;
     try {
