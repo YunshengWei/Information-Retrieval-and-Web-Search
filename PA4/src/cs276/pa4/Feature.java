@@ -105,6 +105,7 @@ public class Feature {
 		// BM25F, PageRank, Smallest Window features
 		double[] more = new double[1];
 		// PageRank
+		more[0] = d.page_rank;
 		
 		double[] concat = new double[basic.length + more.length];
 		System.arraycopy(basic, 0, concat, 0, basic.length);
