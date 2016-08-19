@@ -13,6 +13,7 @@ public class Feature {
 	public static boolean isSublinearScaling = true;
 	private Parser parser = new Parser();
 	double smoothingBodyLength = 800;
+	private BM25Scorer bm25Scorer = null;
 
 	Map<String,Double> idfs;
 		
@@ -99,13 +100,18 @@ public class Feature {
 				tfs.get(tfType).put(queryWord, tfs.get(tfType).get(queryWord)/normalizationFactor);
 	}
 
-	public double[] extractMoreFeatures(Document d, Query q, Map<Query,Map<String, Document>> dataMap) {
+	public double[] extractMoreFeatures(Document d, Query q, Map<Query,Map<String, Document>> queryDict) {
 		
 		double[] basic = extractFeatureVector(d, q);
 		// BM25F, PageRank, Smallest Window features
-		double[] more = new double[1];
+		double[] more = new double[2];
 		// PageRank
 		more[0] = d.page_rank;
+		// BM25F
+		if (bm25Scorer == null) {
+		  bm25Scorer = new BM25Scorer(idfs, queryDict);
+		}
+		more[1] = bm25Scorer.getSimScore(d, q);
 		
 		double[] concat = new double[basic.length + more.length];
 		System.arraycopy(basic, 0, concat, 0, basic.length);

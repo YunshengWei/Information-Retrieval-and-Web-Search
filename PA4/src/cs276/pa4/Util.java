@@ -169,6 +169,7 @@ public class Util {
     attributes.add(new Attribute("header_w"));
     attributes.add(new Attribute("anchor_w"));
     attributes.add(new Attribute("pagerank_w"));
+    attributes.add(new Attribute("bm25f_w"));
     X = new Instances("train_dataset", attributes, 0);
     int numAttributes = X.numAttributes();
 
@@ -180,6 +181,14 @@ public class Util {
         new ArrayList<Pair<Query, Document>>();
     try {
       Map<Query, List<Document>> data_map = Util.loadTrainData(train_data_file);
+      Map<Query, Map<String, Document>> queryDict = new HashMap<>();
+      for (Map.Entry<Query, List<Document>> entry : data_map.entrySet()) {
+        Map<String, Document> urlToDoc = new HashMap<>();
+        for (Document doc : entry.getValue()) {
+          urlToDoc.put(doc.url, doc);
+        }
+        queryDict.put(entry.getKey(), urlToDoc);
+      }
 
       Feature feature = new Feature(idfs);
 
@@ -190,7 +199,7 @@ public class Util {
         for (Document doc : data_map.get(query)) {
           index_map.get(query_counter).add(doc_counter);
           doc_counter++;
-          double[] features = feature.extractMoreFeatures(doc, query, null);
+          double[] features = feature.extractMoreFeatures(doc, query, queryDict);
           double[] instance = new double[numAttributes];
           for (int i = 0; i < features.length; ++i) {
             instance[i] = features[i];
